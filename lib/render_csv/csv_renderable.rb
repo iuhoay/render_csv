@@ -11,15 +11,16 @@ module RenderCsv
       return '' if empty?
       return join(',') unless first.class.respond_to? :column_names
 
-      columns = first.class.column_names
-      columns &= options[:only].map(&:to_s) if options[:only]
-      columns -= options[:except].map(&:to_s) if options[:except]
-      columns += options[:add_methods].map(&:to_s) if options[:add_methods]
+      columns = if options[:only]
+                  options[:only].map(&:to_s)
+                else
+                  first.class.column_names
+                end
 
       CSV.generate(encoding: 'utf-8') do |row|
         row << columns
         self.each do |obj|
-          row << columns.map { |c| obj.send(c) }
+          row << columns.map { |c| obj.instance_eval(c) }
         end
       end
     end
